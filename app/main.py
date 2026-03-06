@@ -161,3 +161,38 @@ def create_book(book: schemas.BookCreate, db: Session = Depends(database.get_db)
     db.commit()
     db.refresh(new_book)
     return new_book
+
+#Adding endpoints for Signatures (lab2)
+from . import crypto_utils
+import secrets
+
+# SCENARIO 1: Client signs, Server verifies
+@app.post("/crypto/verify-client", tags=["Lab 2: Digital Signature"])
+def verify_client_message(data: schemas.ClientSignatureRequest):
+    """
+    Scenario 1: Client sends signed message + public key. 
+    Server confirms authenticity and integrity.
+    """
+    is_valid = crypto_utils.verify_client_signature(
+        data.message, data.signature, data.public_key
+    )
+    if is_valid:
+        return {"status": "Success", "details": "Signature is valid. Authenticity confirmed."}
+    else:
+        raise HTTPException(status_code=400, detail="Invalid signature. Content may be tampered.")
+
+# SCENARIO 2: Server signs, Client verifies
+@app.get("/crypto/server-message", response_model=schemas.ServerSignatureResponse, tags=["Lab 2: Digital Signature"])
+def get_server_signed_data():
+    """
+    Scenario 2: Server generates random data, signs it, and provides the public key.
+    """
+    random_msg = f"Security-Token-{secrets.token_hex(4)}"
+    signature = crypto_utils.sign_with_server(random_msg)
+    public_key = crypto_utils.get_server_public_key_pem()
+    
+    return {
+        "message": random_msg,
+        "signature": signature,
+        "server_public_key": public_key
+    }

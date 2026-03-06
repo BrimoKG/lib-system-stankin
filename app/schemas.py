@@ -35,3 +35,14 @@ class BookResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+#--------SIgnature requests
+class ClientSignatureRequest(BaseModel):
+    message: str
+    signature: str # The Base64 encoded signature
+    public_key: str # The client's public key in PEM format
+
+class ServerSignatureResponse(BaseModel):
+    message: str
+    signature: str
+    server_public_key: str
